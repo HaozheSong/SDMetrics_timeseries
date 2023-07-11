@@ -84,7 +84,49 @@ class QualityReport:
             self._traverse_metrics_dict(metrics_dict, html_children)
 
         app.layout = html.Div(children=html_children)
-        app.run_server(debug=False)
+        app.run_server(debug=False, host='0.0.0.0')
+
+    def serialize(self):
+        dict_metric_scores = self.dict_metric_scores
+        # ------------------------------depth=2------------------------------
+        # dict_metric_scores = {
+        #     'fidelity': {
+        #         'Single attribute distributional similarity': {
+        #             'srcip': [(score, best, worst), Figure],
+        #             'dstip': [(0.36005828477184515, 0.0, 1.0), Figure],
+        #         },
+        #         'Single feature distributional similarity': {
+        #             'td': [(score, best, worst), Figure],
+        #             'pkt': [(1806.4343452780117, 0.0, inf), Figure],
+        #         }
+        #     }
+        # }
+        # ------------------------------depth=1------------------------------
+        # dict_metric_scores = {
+        #     'fidelity': {
+        #         'srcip': [(score, best, worst), Figure],
+        #         'dstip': [(0.36005828477184515, 0.0, 1.0), Figure],
+        #         'pkt': [(1806.4343452780117, 0.0, inf), Figure],
+        #     }
+        # }
+        return
+
+    def get_fig_refs(self, dict_var, figs_dict):
+        for key, value in dict_var.items():
+            if not isinstance(value, list):
+                self.get_fig_refs(value, figs_dict)
+            else:
+                figs_dict[key] = value[1]
+
+    def fig2png(self, save_folder):
+        figs_dict = {}
+        self.get_fig_refs(self.dict_metric_scores, figs_dict)
+        for fig_name, fig_obj in figs_dict.items():
+            img_bytes = fig_obj.to_image(format='png')
+            save_path = os.path.join(save_folder, fig_name + '.png')
+            os.makedirs(save_folder, exist_ok=True)
+            with open(save_path, 'wb') as img_file:
+                img_file.write(img_bytes)
 
     def generate(self, real_data, synthetic_data, metadata, out=sys.stdout):
         self.dict_metric_scores = OrderedDict()
