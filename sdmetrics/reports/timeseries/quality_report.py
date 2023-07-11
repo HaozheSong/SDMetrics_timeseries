@@ -9,6 +9,7 @@ import dash
 import inspect
 import importlib
 import pprint
+import json
 
 
 from dash import dcc, html
@@ -86,8 +87,7 @@ class QualityReport:
         app.layout = html.Div(children=html_children)
         app.run_server(debug=False, host='0.0.0.0')
 
-    def serialize(self):
-        dict_metric_scores = self.dict_metric_scores
+    def get_fig_refs(self, dict_var, figs_dict):
         # ------------------------------depth=2------------------------------
         # dict_metric_scores = {
         #     'fidelity': {
@@ -109,9 +109,6 @@ class QualityReport:
         #         'pkt': [(1806.4343452780117, 0.0, inf), Figure],
         #     }
         # }
-        return
-
-    def get_fig_refs(self, dict_var, figs_dict):
         for key, value in dict_var.items():
             if not isinstance(value, list):
                 self.get_fig_refs(value, figs_dict)
@@ -147,6 +144,23 @@ class QualityReport:
             save_path = os.path.join(save_folder, fig_name + '.json')
             with open(save_path, 'w') as json_file:
                 json_file.write(json_str)
+
+    def save_result_as_json(self, save_folder):
+        # 'srcip': [(score, best, worst), Figure] -> 'srcip': (score, best, worst)
+        def delete_fig_objs(dict_var, new_dict_var):
+            for key, value in dict_var.items():
+                if not isinstance(value, list):
+                    new_dict_var[key] = value
+                    delete_fig_objs(value, new_dict_var[key])
+                else:
+                    new_dict_var[key] = [str(v) for v in value[0]]
+        new_dict_var = {}
+        delete_fig_objs(self.dict_metric_scores, new_dict_var)
+
+        os.makedirs(save_folder, exist_ok=True)
+        save_path = os.path.join(save_folder, 'result.json')
+        with open(save_path, 'w') as json_file:
+            json.dump(new_dict_var, json_file)
 
     def generate(self, real_data, synthetic_data, metadata, out=sys.stdout):
         self.dict_metric_scores = OrderedDict()
