@@ -121,22 +121,32 @@ class QualityReport:
     def fig2png(self, save_folder):
         figs_dict = {}
         self.get_fig_refs(self.dict_metric_scores, figs_dict)
+        os.makedirs(save_folder, exist_ok=True)
         for fig_name, fig_obj in figs_dict.items():
             img_bytes = fig_obj.to_image(format='png')
             save_path = os.path.join(save_folder, fig_name + '.png')
-            os.makedirs(save_folder, exist_ok=True)
             with open(save_path, 'wb') as img_file:
                 img_file.write(img_bytes)
 
     def fig2html(self, save_folder, full_html=False):
         figs_dict = {}
         self.get_fig_refs(self.dict_metric_scores, figs_dict)
+        os.makedirs(save_folder, exist_ok=True)
         for fig_name, fig_obj in figs_dict.items():
             html_str = fig_obj.to_html(full_html=full_html)
             save_path = os.path.join(save_folder, fig_name + '.html')
-            os.makedirs(save_folder, exist_ok=True)
             with open(save_path, 'w') as html_file:
                 html_file.write(html_str)
+
+    def fig2json(self, save_folder, pretty=True, remove_uids=False):
+        figs_dict = {}
+        self.get_fig_refs(self.dict_metric_scores, figs_dict)
+        os.makedirs(save_folder, exist_ok=True)
+        for fig_name, fig_obj in figs_dict.items():
+            json_str = fig_obj.to_json(pretty=pretty, remove_uids=remove_uids)
+            save_path = os.path.join(save_folder, fig_name + '.json')
+            with open(save_path, 'w') as json_file:
+                json_file.write(json_str)
 
     def generate(self, real_data, synthetic_data, metadata, out=sys.stdout):
         self.dict_metric_scores = OrderedDict()
