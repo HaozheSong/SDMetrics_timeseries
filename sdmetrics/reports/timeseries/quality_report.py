@@ -128,6 +128,16 @@ class QualityReport:
             with open(save_path, 'wb') as img_file:
                 img_file.write(img_bytes)
 
+    def fig2html(self, save_folder, full_html=False):
+        figs_dict = {}
+        self.get_fig_refs(self.dict_metric_scores, figs_dict)
+        for fig_name, fig_obj in figs_dict.items():
+            html_str = fig_obj.to_html(full_html=full_html)
+            save_path = os.path.join(save_folder, fig_name + '.html')
+            os.makedirs(save_folder, exist_ok=True)
+            with open(save_path, 'w') as html_file:
+                html_file.write(html_str)
+
     def generate(self, real_data, synthetic_data, metadata, out=sys.stdout):
         self.dict_metric_scores = OrderedDict()
 
