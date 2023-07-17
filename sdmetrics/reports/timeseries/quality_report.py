@@ -10,6 +10,7 @@ import inspect
 import importlib
 import pprint
 import json
+import copy
 
 
 from dash import dcc, html
@@ -112,7 +113,7 @@ class QualityReport:
         for key, value in dict_var.items():
             if not isinstance(value, list):
                 self.get_fig_refs(value, figs_dict)
-            else:
+            elif value[1] is not None:
                 figs_dict[key] = value[1]
 
     def fig2png(self, save_folder):
@@ -150,20 +151,19 @@ class QualityReport:
 
     def save_result_as_json(self, save_folder):
         # 'srcip': [(score, best, worst), Figure] -> 'srcip': (score, best, worst)
-        def delete_fig_objs(dict_var, new_dict_var):
+        def delete_fig_objs(dict_var):
             for key, value in dict_var.items():
                 if not isinstance(value, list):
-                    new_dict_var[key] = value
-                    delete_fig_objs(value, new_dict_var[key])
+                    delete_fig_objs(dict_var[key])
                 else:
-                    new_dict_var[key] = [str(v) for v in value[0]]
-        new_dict_var = {}
-        delete_fig_objs(self.dict_metric_scores, new_dict_var)
+                    dict_var[key] = [str(v) for v in value[0]]
+        metrics_copy = copy.deepcopy(self.dict_metric_scores)
+        delete_fig_objs(metrics_copy)
 
         os.makedirs(save_folder, exist_ok=True)
         save_path = os.path.join(save_folder, 'result.json')
         with open(save_path, 'w') as json_file:
-            json.dump(new_dict_var, json_file)
+            json.dump(metrics_copy, json_file)
 
     def generate(self, real_data, synthetic_data, metadata, out=sys.stdout):
         self.dict_metric_scores = OrderedDict()
